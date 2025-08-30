@@ -81,6 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (isDevAuth) {
         // In dev mode, mimic successful signup but require sign-in to set user
+        try { sessionStorage.setItem('veridia_just_signed_up', '1'); } catch {}
         return { data: null, error: null };
       }
       const { data, error } = await supabase.auth.signUp({
@@ -89,9 +90,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         options: {
           data: {
             full_name: fullName,
+            needs_onboarding: true,
           },
         },
       });
+      if (!error) {
+        try { sessionStorage.setItem('veridia_just_signed_up', '1'); } catch {}
+      }
       return { data, error };
     } catch (error) {
       return { data: null, error };
