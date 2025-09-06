@@ -73,7 +73,15 @@ export function Dashboard({ user, onNavigate }: DashboardProps) {
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Today's Workout</h2>
-            <Calendar className="w-5 h-5 text-blue-600" />
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => onNavigate('workouts')}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                View Full Plan
+              </button>
+              <Calendar className="w-5 h-5 text-blue-600" />
+            </div>
           </div>
           
           {todaysWorkout ? (
@@ -94,6 +102,12 @@ export function Dashboard({ user, onNavigate }: DashboardProps) {
                 <Play className="w-5 h-5" />
                 Start Today's Workout
               </button>
+              <button
+                onClick={() => onNavigate('workouts')}
+                className="w-full text-blue-600 hover:underline text-sm mt-2"
+              >
+                View Full Plan
+              </button>
             </div>
           ) : (
             <div className="text-center py-8">
@@ -104,6 +118,12 @@ export function Dashboard({ user, onNavigate }: DashboardProps) {
               >
                 <Plus className="w-4 h-4" />
                 Schedule Workout
+              </button>
+              <button
+                onClick={() => onNavigate('workouts')}
+                className="block mx-auto text-blue-600 hover:underline text-sm mt-3"
+              >
+                View Full Plan
               </button>
             </div>
           )}
@@ -133,7 +153,7 @@ export function Dashboard({ user, onNavigate }: DashboardProps) {
         {/* Quick Actions */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <button
               onClick={() => setShowQuickLog('weight')}
               className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
@@ -148,6 +168,14 @@ export function Dashboard({ user, onNavigate }: DashboardProps) {
             >
               <Smile className="w-5 h-5 text-green-600" />
               <span className="font-medium text-gray-700">Log Mood & Energy</span>
+            </button>
+
+            <button
+              onClick={() => onNavigate('workouts')}
+              className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              <Plus className="w-5 h-5 text-purple-600" />
+              <span className="font-medium text-gray-700">Create Workout</span>
             </button>
           </div>
         </div>
