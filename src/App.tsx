@@ -12,12 +12,13 @@ function App() {
   const [currentScreen, setCurrentScreen] = useState('dashboard');
   const [profileLoading, setProfileLoading] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  // Use a session-scoped flag to show onboarding only immediately after signup
   const [justSignedUp, setJustSignedUp] = useState<boolean>(() => {
     try { return sessionStorage.getItem('veridia_just_signed_up') === '1'; } catch { return false; }
   });
 
   useEffect(() => {
-    // Refresh justSignedUp flag when auth state changes (e.g., right after signup)
+    // Refresh flag after auth state changes (e.g., right after signup completes)
     try { setJustSignedUp(sessionStorage.getItem('veridia_just_signed_up') === '1'); } catch {}
 
     const ensureProfile = async () => {
@@ -54,7 +55,7 @@ function App() {
         }
 
         const onboardingDone = Boolean(profile?.onboarding_complete);
-        // Only require onboarding immediately after signup
+        // Only show onboarding right after signup
         setNeedsOnboarding(justSignedUp && !onboardingDone);
       } catch (e) {
         console.warn('Error ensuring profile:', e);
@@ -93,7 +94,7 @@ function App() {
   }
 
   if (needsOnboarding) {
-    return <OnboardingFlow user={user} onComplete={() => { setNeedsOnboarding(false); try { sessionStorage.removeItem('veridia_just_signed_up'); } catch {}; setJustSignedUp(false);} } />;
+    return <OnboardingFlow user={user} onComplete={() => { setNeedsOnboarding(false); try { sessionStorage.removeItem('veridia_just_signed_up'); } catch {}; setJustSignedUp(false); } } />;
   }
 
   const renderCurrentScreen = () => {
