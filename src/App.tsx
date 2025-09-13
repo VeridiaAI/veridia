@@ -3,6 +3,12 @@ import { useAuth } from './hooks/useAuth';
 import { AuthForm } from './components/AuthForm';
 import { Dashboard } from './components/Dashboard';
 import { WorkoutList } from './components/WorkoutList';
+import { ProgressScreen } from './components/Progress';
+import { LearnScreen } from './components/Learn';
+// import { CoachNotes } from './components/CoachNotes';
+import { ProfileScreen } from './components/Profile';
+import { CoachNotes } from './components/CoachNotes';
+import { DataExportImport } from './components/DataExportImport';
 import { Navigation } from './components/Navigation';
 import { supabase } from './lib/supabase';
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow';
@@ -104,38 +110,15 @@ function App() {
       case 'workouts':
         return <WorkoutList user={user} />;
       case 'progress':
-        return (
-          <div className="min-h-screen bg-gray-50 p-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Progress</h2>
-                <p className="text-gray-600">Coming soon: Overview, Strength, Cardio, Body Metrics, Well-being.</p>
-              </div>
-            </div>
-          </div>
-        );
+        return <ProgressScreen user={user} />;
       case 'learn':
-        return (
-          <div className="min-h-screen bg-gray-50 p-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Learn</h2>
-                <p className="text-gray-600">Curated content and guides will appear here.</p>
-              </div>
-            </div>
-          </div>
-        );
+        return <LearnScreen />;
+      case 'notes':
+        return <CoachNotes user={user} />;
       case 'profile':
-        return (
-          <div className="min-h-screen bg-gray-50 p-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Profile</h2>
-                <p className="text-gray-600">Manage your account and preferences.</p>
-              </div>
-            </div>
-          </div>
-        );
+        return <ProfileScreen user={user} onNavigate={setCurrentScreen} />;
+      case 'data':
+        return <DataExportImport user={user} />;
       default:
         return <Dashboard user={user} onNavigate={setCurrentScreen} />;
     }

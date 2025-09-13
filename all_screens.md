@@ -50,46 +50,46 @@ Use this as a master checklist. Check off as you implement. Keep UI mobile-first
 
 ### Screen 14: Workout Summary & Log
 - [x] Summary: total time, total volume
-- [ ] Exercises performed with actual sets x reps @ weight
+- [x] Exercises performed with actual sets x reps @ weight
 - [x] RPE slider (1–10), session notes
 - [x] Persist session to `workout_sessions`; mark workout `completed`; update streak
 - [x] Buttons: Log Workout, Return to Dashboard
 
 ### Screen 15: Progress (tables-first)
-- [ ] Tabs: Overview | Strength | Cardio | Body Metrics | Well-being
-- [ ] Overview: Total Workouts, Avg. Duration, Current Streak
-- [ ] Strength: table of PRs and volume by exercise (from `set_logs`)
-- [ ] Cardio: simple table (placeholder until cardio schema)
-- [ ] Body Metrics: weight entries from `user_stats`
+- [x] Tabs: Overview | Strength | Cardio | Body Metrics | Well-being
+- [x] Overview: Total Workouts, Avg. Duration, Current Streak
+- [x] Strength: table of PRs and volume by exercise (from `set_logs`)
+- [x] Cardio: simple table (placeholder until cardio schema)
+- [x] Body Metrics: weight entries from `user_stats`
 - [ ] Well-being: sleep/stress (reuse onboarding lifestyle + notes if any)
-- [ ] Export Data button (client-side JSON)
+- [x] Export Data button (client-side JSON)
 
 ### Screen 16: Learn (Static Content)
-- [ ] Seed local JSON `src/content/learn.json`
-- [ ] Search + category filters
-- [ ] Featured content card + list items
+- [x] Seed local JSON `src/content/learn.json`
+- [x] Search + category filters
+- [x] Featured content card + list items
 
 ### Screen 17: Content Detail
-- [ ] Title, author/date/source
-- [ ] Scrollable text or embedded video (local file/iframe)
-- [ ] Back button
+- [x] Title, author/date/source
+- [x] Scrollable text or embedded video (local file/iframe)
+- [x] Back button
 
 ### Screen 18: Coach Notes / Journal
-- [ ] List of entries by date; filters (search, date range)
-- [ ] Form: title, content, mood (1–5), energy (1–5)
-- [ ] CRUD operations using `coach_notes`
+- [x] List of entries by date; filters (search, date range)
+- [x] Form: title, content, mood (1–5), energy (1–5)
+- [x] CRUD operations using `coach_notes`
 
 ### Screen 19: Profile / Settings
-- [ ] Show email; Logout
+- [x] Show email; Logout
 - [ ] Edit personal details (subset of onboarding fields)
 - [ ] Manage goals
-- [ ] Change password (Supabase Auth)
-- [ ] Privacy & Data; Data Export/Import; Help & Support links
+- [x] Change password (Supabase Auth)
+- [x] Privacy & Data; Data Export/Import; Help & Support links
 
 ### Screen 20: Data Export/Import
-- [ ] Export JSON: profiles, workouts, exercises, workout_sessions, set_logs, user_stats, coach_notes
-- [ ] Import JSON: validate and insert rows (idempotent checks)
-- [ ] Note: local-only feature
+- [x] Export JSON: profiles, workouts, exercises, workout_sessions, set_logs, user_stats, coach_notes
+- [x] Import JSON: validate and insert rows (idempotent checks for notes MVP)
+- [x] Note: local-only feature
 
 ### Integration milestones
 - [x] M1: Bottom nav + routes + Dashboard polish
@@ -122,20 +122,15 @@ Use this as a master checklist. Check off as you implement. Keep UI mobile-first
   - Logging sets advances progress; Skip works
   - Summary computes total time/volume; RPE + notes save; session persisted
 
-- [ ] TM3 (after Screen 13 + 14):
-  - Exercise View steps through exercises/sets with rest timer
-  - Logging sets advances progress; Skip works
-  - Summary computes total time/volume; RPE + notes save; session persisted
-
-- [ ] TM4 (after Screen 15):
+- [x] TM4 (after Screen 15):
   - Progress tabs render; Overview numbers look sane
   - Strength table shows recent PRs/volume; Body Metrics table shows weights
   - Export JSON downloads a file
 
-- [ ] TM5 (after Screens 16–17):
+- [x] TM5 (after Screens 16–17):
   - Learn list renders with search/filters; selecting opens Content Detail; Back returns
 
-- [ ] TM6 (after Screen 18):
+- [x] TM6 (after Screen 18):
   - Coach Notes list renders; create/edit/delete note; filters work
 
 - [ ] TM7 (after Screens 19–20):

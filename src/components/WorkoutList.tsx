@@ -42,6 +42,8 @@ export function WorkoutList({ user }: WorkoutListProps) {
   const [summaryVolume, setSummaryVolume] = useState(0);
   const [rpe, setRpe] = useState(7);
   const [sessionNotes, setSessionNotes] = useState('');
+  const [summaryWorkoutId, setSummaryWorkoutId] = useState<string | null>(null);
+  const [summaryLogs, setSummaryLogs] = useState<any[]>([]);
   const [newWorkout, setNewWorkout] = useState({
     title: '',
     description: '',
@@ -74,6 +76,7 @@ export function WorkoutList({ user }: WorkoutListProps) {
   const { exercises: detailExercises } = useExercises(showDetail?.id || '');
   const { exercises: logExercises } = useExercises(showLog?.id || '');
   const { exercises: evExercises } = useExercises(showExerciseView?.id || '');
+  const { exercises: summaryExercises } = useExercises(summaryWorkoutId || '');
   const { startSession, completeSession, logSet, sessions } = useSessions(user.id);
 
   // rest timer
@@ -82,6 +85,16 @@ export function WorkoutList({ user }: WorkoutListProps) {
     const id = setInterval(() => setRestSeconds((s) => s + 1), 1000);
     return () => clearInterval(id);
   }, [isResting]);
+
+  // Load set logs for summary when opened
+  useEffect(() => {
+    (async () => {
+      if (showSummary && activeSessionId) {
+        const { data } = await getSetLogsForSession(activeSessionId);
+        setSummaryLogs(data || []);
+      }
+    })();
+  }, [showSummary, activeSessionId]);
 
   const [newExercise, setNewExercise] = useState({
     name: '',
@@ -736,6 +749,7 @@ export function WorkoutList({ user }: WorkoutListProps) {
                             .reduce((acc, s) => acc + ((s.reps || 0) * (s.weightKg || 0)), 0);
                           setSummaryVolume(vol);
                           setShowExerciseView(null);
+                          setSummaryWorkoutId(showExerciseView.id);
                           setShowSummary(true);
                           setRestSeconds(0);
                           setIsResting(false);
@@ -787,6 +801,27 @@ export function WorkoutList({ user }: WorkoutListProps) {
                   <div className="text-lg font-semibold">{Math.round(summaryVolume)} kg-reps</div>
                 </div>
               </div>
+              {summaryLogs.length > 0 && (
+                <div className="mb-4 max-h-40 overflow-auto">
+                  <div className="text-sm font-medium text-gray-900 mb-2">Exercises</div>
+                  <div className="space-y-2">
+                    {Object.entries(
+                      summaryLogs.reduce((map: Record<string, { name: string; sets: { reps?: number; weight?: number }[] }>, log: any) => {
+                        const ex = (summaryExercises || []).find((e: any) => e.id === log.exercise_id);
+                        const entry = map[log.exercise_id] || { name: ex?.name || 'Exercise', sets: [] };
+                        entry.sets.push({ reps: log.reps ?? undefined, weight: log.weight_kg ?? undefined });
+                        map[log.exercise_id] = entry;
+                        return map;
+                      }, {})
+                    ).map(([exId, val]: any) => (
+                      <div key={exId} className="bg-gray-50 rounded-lg p-2 text-sm">
+                        <div className="font-medium text-gray-800">{val.name}</div>
+                        <div className="text-gray-600">{val.sets.map((s: any, i: number) => `${s.reps || '-'}x${s.weight || 0}kg`).join(', ')}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">RPE: {rpe}</label>
                 <input type="range" min={1} max={10} value={rpe} onChange={(e) => setRpe(parseInt(e.target.value))} className="w-full" />
@@ -805,6 +840,8 @@ export function WorkoutList({ user }: WorkoutListProps) {
                     setShowSummary(false);
                     setActiveSessionId(null);
                     setLoggedSets([]);
+                    setSummaryWorkoutId(null);
+                    setSummaryLogs([]);
                   }}
                   className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
                 >

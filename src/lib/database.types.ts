@@ -56,6 +56,44 @@ export type Database = {
           },
         ]
       }
+      coach_notes: {
+        Row: {
+          id: string
+          user_id: string
+          created_at: string | null
+          title: string
+          content: string | null
+          mood: number | null
+          energy: number | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          created_at?: string | null
+          title: string
+          content?: string | null
+          mood?: number | null
+          energy?: number | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          created_at?: string | null
+          title?: string
+          content?: string | null
+          mood?: number | null
+          energy?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null

@@ -1,6 +1,6 @@
 //
 import { useAuth } from '../hooks/useAuth';
-import { Home, Dumbbell, User, LineChart, BookOpen, LogOut } from 'lucide-react';
+import { Home, Dumbbell, User, LineChart, BookOpen, Notebook, LogOut } from 'lucide-react';
 
 interface NavigationProps {
   currentScreen: string;
@@ -19,6 +19,7 @@ export function Navigation({ currentScreen, onNavigate }: NavigationProps) {
     { key: 'workouts', label: 'Workouts', icon: Dumbbell },
     { key: 'progress', label: 'Progress', icon: LineChart },
     { key: 'learn', label: 'Learn', icon: BookOpen },
+    { key: 'notes', label: 'Notes', icon: Notebook },
     { key: 'profile', label: 'Profile', icon: User },
   ];
 
