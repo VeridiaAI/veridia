@@ -81,8 +81,8 @@ Use this as a master checklist. Check off as you implement. Keep UI mobile-first
 
 ### Screen 19: Profile / Settings
 - [x] Show email; Logout
-- [ ] Edit personal details (subset of onboarding fields)
-- [ ] Manage goals
+- [x] Edit personal details (subset of onboarding fields)
+- [x] Manage goals
 - [x] Change password (Supabase Auth)
 - [x] Privacy & Data; Data Export/Import; Help & Support links
 
@@ -133,7 +133,7 @@ Use this as a master checklist. Check off as you implement. Keep UI mobile-first
 - [x] TM6 (after Screen 18):
   - Coach Notes list renders; create/edit/delete note; filters work
 
-- [ ] TM7 (after Screens 19–20):
+- [x] TM7 (after Screens 19–20):
   - Profile shows email; edit preferences form updates data
   - Change password works (Supabase)
   - Data Export downloads JSON; Import accepts file and restores items (idempotent)

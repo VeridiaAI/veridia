@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWorkouts, useExercises } from '../hooks/useWorkouts';
+import { workoutTemplates } from '../content/workout_templates';
+import { getExerciseVideoUrl } from '../content/exercise_videos';
 import { useSessions } from '../hooks/useSessions';
 import { format, isToday, isFuture, isPast } from 'date-fns';
 import { 
@@ -53,20 +55,22 @@ export function WorkoutList({ user }: WorkoutListProps) {
   });
 
   const [librarySearch, setLibrarySearch] = useState('');
-  const libraryTemplates = [
-    { title: 'Full Body Strength - Day 1', duration_minutes: 45, focus_area: 'Full Body', description: 'Compound lifts and accessories' },
-    { title: 'Upper Body Push', duration_minutes: 40, focus_area: 'Chest/Shoulders/Triceps', description: 'Pressing focus with accessories' },
-    { title: 'Lower Body Strength', duration_minutes: 50, focus_area: 'Legs/Glutes', description: 'Squat pattern emphasis' },
-    { title: 'HIIT Cardio', duration_minutes: 25, focus_area: 'Cardio', description: 'Intervals for conditioning' },
-  ];
+  const libraryTemplates = workoutTemplates.map(t => ({
+    title: t.title,
+    duration_minutes: t.duration_minutes,
+    focus_area: t.focus_area,
+    description: t.description,
+    key: t.key,
+  }));
 
   const { 
     workouts, 
     loading, 
     createWorkout, 
+    createWorkoutFromTemplate,
     updateWorkout, 
     deleteWorkout,
-    getTodaysWorkout,
+    getTodaysWorkouts,
     getUpcomingWorkouts,
     getCompletedWorkouts 
   } = useWorkouts(user.id);
@@ -77,7 +81,7 @@ export function WorkoutList({ user }: WorkoutListProps) {
   const { exercises: logExercises } = useExercises(showLog?.id || '');
   const { exercises: evExercises } = useExercises(showExerciseView?.id || '');
   const { exercises: summaryExercises } = useExercises(summaryWorkoutId || '');
-  const { startSession, completeSession, logSet, sessions } = useSessions(user.id);
+  const { startSession, completeSession, logSet, sessions, getSetLogsForSession } = useSessions(user.id);
 
   // rest timer
   useEffect(() => {
@@ -106,8 +110,8 @@ export function WorkoutList({ user }: WorkoutListProps) {
   const getFilteredWorkouts = () => {
     switch (activeTab) {
       case 'today':
-        const todaysWorkout = getTodaysWorkout();
-        return todaysWorkout ? [todaysWorkout] : [];
+        const todays = getTodaysWorkouts();
+        return todays;
       case 'upcoming':
         return getUpcomingWorkouts();
       case 'completed':
@@ -123,14 +127,30 @@ export function WorkoutList({ user }: WorkoutListProps) {
     e.preventDefault();
     setCreating(true);
     setCreateError(null);
-    const { error } = await createWorkout(newWorkout);
+    const template = (workoutTemplates || []).find((t) => t.title === newWorkout.title);
+    let error: any = null;
+    let created: any = null;
+    if (template) {
+      const res = await createWorkoutFromTemplate(template, newWorkout.scheduled_date);
+      error = res.error;
+      created = res.data;
+    } else {
+      const res = await createWorkout(newWorkout);
+      error = res.error;
+      created = res.data;
+    }
     if (error) {
       setCreateError((error as any)?.message || 'Could not create workout. Please try again.');
       setCreating(false);
       return;
     }
     setShowCreateForm(false);
-    setActiveTab('upcoming');
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    setActiveTab(newWorkout.scheduled_date === todayStr ? 'today' : 'upcoming');
+    if (created) {
+      // Immediately open details of the newly created workout
+      setShowDetail(created);
+    }
     setNewWorkout({
       title: '',
       description: '',
@@ -209,7 +229,7 @@ export function WorkoutList({ user }: WorkoutListProps) {
         {/* Tabs */}
         <div className="flex space-x-1 bg-gray-100 rounded-xl p-1 mb-6">
           {[
-            { key: 'today', label: 'Today', count: getTodaysWorkout() ? 1 : 0 },
+            { key: 'today', label: 'Today', count: getTodaysWorkouts().length },
             { key: 'upcoming', label: 'Upcoming', count: getUpcomingWorkouts().length },
             { key: 'completed', label: 'Completed', count: getCompletedWorkouts().length },
             { key: 'explore', label: 'Explore Library', count: libraryTemplates.length },
@@ -496,6 +516,24 @@ export function WorkoutList({ user }: WorkoutListProps) {
                   className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
 
+                {(() => {
+                  const tmpl = (workoutTemplates || []).find((t) => t.title === newWorkout.title);
+                  if (!tmpl || !tmpl.exercises?.length) return null;
+                  return (
+                    <div className="bg-gray-50 rounded-xl p-3">
+                      <div className="text-sm font-medium text-gray-900 mb-2">Exercises in this template</div>
+                      <div className="space-y-2 max-h-48 overflow-auto pr-1">
+                        {tmpl.exercises.map((ex, i) => (
+                          <div key={`${ex.name}-${i}`} className="flex items-center justify-between p-2 bg-white rounded-lg text-sm border border-gray-100">
+                            <span className="font-medium text-gray-800">{ex.name}</span>
+                            <span className="text-gray-600">{ex.sets} × {ex.reps}{ex.weight_kg ? ` @ ${ex.weight_kg}kg` : ''}{ex.notes ? ` — ${ex.notes}` : ''}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {createError && (
                   <div className="bg-red-50 text-red-700 border border-red-200 rounded-xl p-3 text-sm">{createError}</div>
                 )}
@@ -707,7 +745,22 @@ export function WorkoutList({ user }: WorkoutListProps) {
               {evExercises.length > 0 ? (
                 <>
                   <div className="mb-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="font-medium text-gray-900">{evExercises[exerciseIdx]?.name}</div>
+                    <div className="font-medium text-gray-900 flex items-center justify-between gap-3">
+                      <span>{evExercises[exerciseIdx]?.name}</span>
+                      {(() => {
+                        const url = getExerciseVideoUrl(evExercises[exerciseIdx]?.name);
+                        return url ? (
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-600 hover:text-blue-700 text-sm underline"
+                          >
+                            Demo
+                          </a>
+                        ) : null;
+                      })()}
+                    </div>
                     <div className="text-sm text-gray-600">Set {setIdx} of {evExercises[exerciseIdx]?.sets || '-'}</div>
                   </div>
                   <div className="grid grid-cols-2 gap-3 mb-4">

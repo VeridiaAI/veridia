@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase, Database } from '../lib/supabase';
+import type { WorkoutTemplate } from '../content/workout_templates';
 import { format } from 'date-fns';
 
 type Workout = Database['public']['Tables']['workouts']['Row'];
@@ -80,9 +81,60 @@ export function useWorkouts(userId: string) {
     }
   };
 
-  const getTodaysWorkout = () => {
+  const createWorkoutFromTemplate = async (
+    template: WorkoutTemplate,
+    scheduledDate: string
+  ) => {
+    try {
+      // 1) Create the workout
+      const workoutPayload: Database['public']['Tables']['workouts']['Insert'] = {
+        title: template.title,
+        description: template.description,
+        duration_minutes: template.duration_minutes,
+        focus_area: template.focus_area,
+        scheduled_date: scheduledDate,
+        status: 'scheduled',
+        user_id: userId,
+      } as any;
+
+      const { data: workout, error: workoutErr } = await supabase
+        .from('workouts')
+        .insert([workoutPayload])
+        .select()
+        .single();
+      if (workoutErr || !workout) throw workoutErr || new Error('Workout insert failed');
+
+      // 2) Create the exercises for the new workout
+      const exercisePayloads = template.exercises.map((e) => ({
+        workout_id: workout.id,
+        name: e.name,
+        sets: e.sets,
+        reps: e.reps,
+        weight_kg: e.weight_kg ?? 0,
+        notes: e.notes ?? '',
+        completed: false,
+      }));
+      if (exercisePayloads.length > 0) {
+        const { error: exErr } = await supabase
+          .from('exercises')
+          .insert(exercisePayloads);
+        if (exErr) {
+          // Rollback workout if exercise creation fails
+          await supabase.from('workouts').delete().eq('id', workout.id);
+          throw exErr;
+        }
+      }
+
+      await fetchWorkouts();
+      return { data: workout, error: null } as const;
+    } catch (error) {
+      return { data: null, error } as const;
+    }
+  };
+
+  const getTodaysWorkouts = () => {
     const today = format(new Date(), 'yyyy-MM-dd');
-    return workouts.find(workout => workout.scheduled_date === today);
+    return workouts.filter((workout) => workout.scheduled_date === today && workout.status !== 'completed');
   };
 
   const getUpcomingWorkouts = () => {
@@ -100,9 +152,10 @@ export function useWorkouts(userId: string) {
     workouts,
     loading,
     createWorkout,
+    createWorkoutFromTemplate,
     updateWorkout,
     deleteWorkout,
-    getTodaysWorkout,
+    getTodaysWorkouts,
     getUpcomingWorkouts,
     getCompletedWorkouts,
     refetch: fetchWorkouts,
