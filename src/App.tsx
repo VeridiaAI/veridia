@@ -12,7 +12,7 @@ import { DataExportImport } from './components/DataExportImport';
 import { Navigation } from './components/Navigation';
 import { supabase } from './lib/supabase';
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow';
-import { SquatAnalyzer } from './components/SquatAnalyzer';
+import { Analyzer } from './components/Analyzer';
 
 function App() {
   const { user, loading } = useAuth();
@@ -115,7 +115,7 @@ function App() {
       case 'learn':
         return <LearnScreen />;
       case 'analyzer':
-        return <SquatAnalyzer />;
+        return <Analyzer />;
       case 'notes':
         return <CoachNotes user={user} />;
       case 'profile':
