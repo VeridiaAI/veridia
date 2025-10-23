@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { SquatAnalyzer } from './SquatAnalyzer';
 import { LungeAnalyzer } from './LungeAnalyzer';
 import { DeadliftAnalyzer } from './DeadliftAnalyzer';
+import { PlankAnalyzer } from './PlankAnalyzer';
+import { PushupAnalyzer } from './PushupAnalyzer';
 
-type TabKey = 'squat' | 'lunge' | 'deadlift';
+type TabKey = 'squat' | 'lunge' | 'deadlift' | 'plank' | 'pushup';
 
 export function Analyzer() {
   const [tab, setTab] = useState<TabKey>('squat');
@@ -26,11 +28,15 @@ export function Analyzer() {
           <TabButton k="squat" label="Squat" />
           <TabButton k="lunge" label="Lunge" />
           <TabButton k="deadlift" label="Deadlift" />
+          <TabButton k="plank" label="Plank" />
+          <TabButton k="pushup" label="Push-up" />
         </div>
       </div>
       {tab === 'squat' && <SquatAnalyzer />}
       {tab === 'lunge' && <LungeAnalyzer />}
       {tab === 'deadlift' && <DeadliftAnalyzer />}
+      {tab === 'plank' && <PlankAnalyzer />}
+      {tab === 'pushup' && <PushupAnalyzer />}
     </div>
   );
 }
