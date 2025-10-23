@@ -12,6 +12,8 @@ type PushupAnalysis = {
   elbowLockout: boolean;
   overallForm: 'excellent' | 'good' | 'needs-improvement' | 'poor';
   feedback: string[];
+  elbowAngle: number; // angle used for analysis
+  sideUsed: 'left' | 'right';
 };
 
 export function PushupAnalyzer() {
@@ -117,6 +119,7 @@ export function PushupAnalyzer() {
     const leftConf = [lShoulder, lElbow, lWrist, lHip, lKnee, lAnkle].reduce((s, p) => s + (p?.confidence || 0), 0);
     const rightConf = [rShoulder, rElbow, rWrist, rHip, rKnee, rAnkle].reduce((s, p) => s + (p?.confidence || 0), 0);
     const useLeft = leftConf >= rightConf;
+    const sideUsed: 'left' | 'right' = useLeft ? 'left' : 'right';
     const shoulder = useLeft ? lShoulder : rShoulder;
     const elbow = useLeft ? lElbow : rElbow;
     const wrist = useLeft ? lWrist : rWrist;
@@ -125,7 +128,7 @@ export function PushupAnalyzer() {
 
     // Chest depth proxy: elbow angle (shoulder-elbow-wrist)
     const elbowAngle = calculateAngle(shoulder, elbow, wrist) ?? 180;
-    const chestDepthGood = elbowAngle < 95; // below ~90 at bottom
+    const chestDepthGood = elbowAngle < 100; // allow small margin below ~90
 
     // Torso rigid: hip near line between shoulder and ankle (similar to plank)
     let torsoRigid = true;
@@ -139,7 +142,7 @@ export function PushupAnalyzer() {
     }
 
     // Lockout at top: elbow extended
-    const elbowLockout = elbowAngle > 160;
+    const elbowLockout = elbowAngle > 155; // slightly relaxed
 
     let overallForm: PushupAnalysis['overallForm'] = 'excellent';
     const feedback: string[] = [];
@@ -148,7 +151,7 @@ export function PushupAnalyzer() {
     if (!elbowLockout) { feedback.push('Lock out fully at the top'); overallForm = 'needs-improvement'; }
     if (chestDepthGood && torsoRigid && elbowLockout) feedback.push('Excellent rep!');
 
-    return { chestDepthGood, torsoRigid, elbowLockout, overallForm, feedback };
+    return { chestDepthGood, torsoRigid, elbowLockout, overallForm, feedback, elbowAngle, sideUsed };
   };
 
   const computeInPosition = (raw: PoseKeypoint[], smoothed: PoseKeypoint[], canvasW: number): boolean => {
@@ -180,25 +183,25 @@ export function PushupAnalyzer() {
     // Horizontal body: |dy|/|dx| small (tilt < ~25°)
     const dx = a.x - s.x; const dy = a.y - s.y;
     const tiltDeg = Math.abs(Math.atan2(dy, dx) * 180 / Math.PI);
-    const horizontal = tiltDeg < 25;
+    const horizontal = tiltDeg < 35; // allow more incline/decline
 
     // Body length should be significant (avoid close-up partials)
     const bodyLen = Math.hypot(dx, dy);
-    if (bodyLen < 0.35 * canvasW) return false;
+    if (bodyLen < 0.30 * canvasW) return false;
 
     // Torso rigid: hip near line shoulder-ankle
     const A = s, B = a, P = h;
     const num = Math.abs((B.y - A.y) * P.x - (B.x - A.x) * P.y + B.x * A.y - B.y * A.x);
     const den = Math.hypot(B.y - A.y, B.x - A.x) || 1;
     const dist = num / den;
-    const torsoRigid = dist < 0.08 * den;
+    const torsoRigid = dist < 0.10 * den;
 
     // Shoulder over wrist horizontally
     const upperArm = Math.hypot((s.x - e.x), (s.y - e.y)) || 1;
-    const shoulderOverWrist = Math.abs(s.x - w.x) < 0.4 * upperArm;
+    const shoulderOverWrist = Math.abs(s.x - w.x) < 0.75 * upperArm;
 
     // Hip below shoulder
-    const orderingOk = h.y > s.y + 10;
+    const orderingOk = h.y > s.y - 5; // small tolerance
 
     return horizontal && torsoRigid && shoulderOverWrist && orderingOk;
   };
@@ -239,22 +242,13 @@ export function PushupAnalyzer() {
     const inPos = computeInPosition(keypoints, smoothed, canvas.width);
     if (inPos) { positionHoldRef.current += 1; positionDropRef.current = 0; }
     else { positionDropRef.current += 1; positionHoldRef.current = 0; }
-    if (!inPositionRef.current && positionHoldRef.current >= 5) inPositionRef.current = true; // ~5 frames
-    if (inPositionRef.current && positionDropRef.current >= 8) inPositionRef.current = false; // drop slower
+    if (!inPositionRef.current && positionHoldRef.current >= 3) inPositionRef.current = true; // quicker engage
+    if (inPositionRef.current && positionDropRef.current >= 6) inPositionRef.current = false; // moderate disengage
 
     // Rep state machine with small hysteresis
-    const elbowAngle = (() => {
-      const get = (i: number): PoseKeypoint | undefined => smoothed[i] && smoothed[i].confidence > 0.5 ? smoothed[i] : undefined;
-      const lShoulder = get(5), rShoulder = get(6);
-      const lElbow = get(7), rElbow = get(8);
-      const lWrist = get(9), rWrist = get(10);
-      const left = (calculateAngle(lShoulder, lElbow, lWrist) ?? 180);
-      const right = (calculateAngle(rShoulder, rElbow, rWrist) ?? 180);
-      return Math.min(left, right);
-    })();
-
-    const bottomThresh = 95;  // below ~90
-    const topThresh = 160;    // extended
+    const elbowAngle = analysis.elbowAngle;
+    const bottomThresh = 100;  // below ~90 with margin
+    const topThresh = 155;     // extended with margin
     if (inPositionRef.current) {
       if (elbowAngle < bottomThresh) { bottomHoldRef.current += 1; topHoldRef.current = 0; }
       else if (elbowAngle > topThresh) { topHoldRef.current += 1; bottomHoldRef.current = 0; }
